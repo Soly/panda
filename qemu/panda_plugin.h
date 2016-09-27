@@ -732,7 +732,7 @@ target_phys_addr_t panda_virt_to_phys(CPUState *env, target_ulong addr);
 // is_write == 1 means this is a write to the virtual memory addr of the contents of buf.
 // is_write == 0 is a read from that addr into buf.  
 int panda_virtual_memory_rw(CPUState *env, target_ulong addr, uint8_t *buf, int len, int is_write);
-
+int panda_is_io_memory(CPUState *env, target_ulong vaddr);
 bool panda_flush_tb(void);
 
 void panda_do_flush_tb(void);

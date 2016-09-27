@@ -4105,6 +4105,8 @@ int panda_virtual_memory_rw(CPUState *env, target_ulong addr,
     return -1;
 }
 
+
+
 #else
 
 // addr is a physical addr.
@@ -4312,6 +4314,25 @@ void cpu_physical_memory_rw(target_phys_addr_t addr, uint8_t *buf,
 int panda_physical_memory_rw(target_phys_addr_t addr, uint8_t *buf,
                             int len, int is_write) {
     return cpu_physical_memory_rw_ex(addr, buf, len, is_write, true);
+}
+
+int panda_is_io_memory(CPUState *env, target_ulong vaddr) {
+    PhysPageDesc *p;
+    unsigned long pd;
+    target_phys_addr_t paddr;
+
+    paddr = cpu_get_phys_addr(env, vaddr);
+    p = phys_page_find(paddr >> TARGET_PAGE_BITS);
+    if (!p) {
+        pd = IO_MEM_UNASSIGNED;
+    } else {
+        pd = p->phys_offset;
+    }
+    if ((pd & ~TARGET_PAGE_MASK) > IO_MEM_ROM && !(pd & IO_MEM_ROMD)) {
+        /* IO memory case (romd handled later) */
+        return 1;
+    }
+    return 0;
 }
 
 /* used for ROM loading : can write in RAM and ROM */

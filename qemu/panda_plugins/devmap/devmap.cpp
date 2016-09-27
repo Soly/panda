@@ -69,12 +69,9 @@ uint64_t bytes_read, bytes_written;
 uint64_t num_reads, num_writes;
 std::vector<Addr_Range> accesses;
 
-void update_accesses(target_ulong addr, target_ulong size) {
+void update_accesses(CPUState* env, target_ulong addr, target_ulong size) {
     Addr_Range r(addr, size);
     bool broke = false;
-    PhysPageDesc *p;
-    unsigned long pd;
-
     for(auto i = accesses.begin(); i != accesses.end(); i++) {
         if(i->overlap(r)) {
            i->merge(r);
@@ -83,17 +80,7 @@ void update_accesses(target_ulong addr, target_ulong size) {
            break;
         }
     }
-
-    p = phys_page_find(paddr >> TARGET_PAGE_BITS);
-    if (!p) {
-        pd = IO_MEM_UNASSIGNED;
-    } else {
-        pd = p->phys_offset;
-    }
-    if(!broke) {
-        if ((pd & ~TARGET_PAGE_MASK) > IO_MEM_ROM && !(pd & IO_MEM_ROMD)) {
-            r.mmio = true;
-        }
+    if(!broke && (r.mmio = panda_is_io_memory(env, addr))) {
         accesses.push_back(r);
     }
 }
@@ -102,7 +89,7 @@ int mem_write_callback(CPUState *env, target_ulong pc, target_ulong addr,
                        target_ulong size, void *buf) {
     bytes_written += size;
     num_writes++;
-    update_accesses(addr, size);
+    update_accesses(env, addr, size);
     return 1;
 }
 
@@ -110,7 +97,7 @@ int mem_read_callback(CPUState *env, target_ulong pc, target_ulong addr,
                        target_ulong size, void *buf) {
     bytes_read += size;
     num_reads++;
-    update_accesses(addr, size);
+    update_accesses(env, addr, size);
     return 1;
 }
 
@@ -136,7 +123,7 @@ void uninit_plugin(void *self) {
     );
     printf("Mem ranges:\n");
     for(auto i = accesses.begin(); i != accesses.end(); i++) {
-        printf("start: 0x%lx, end: 0x%lx, size: %lu, #accesses: %lu\n",
-                i->start, i->end, i->size, i->num_accesses);
+        printf("start: 0x%lx, end: 0x%lx, size: %lu, IO: %d, #accesses: %lu\n",
+                i->start, i->end, i->size, i->mmio, i->num_accesses);
     }
 }

@@ -49,7 +49,7 @@ int mem_read_callback(CPUState *env, target_ulong pc, target_ulong addr, target_
 
 struct Addr_Range {
     Addr_Range(target_ulong start, target_ulong size) :
-        start(start), size(size), end(start+size), num_accesses(1), mmio(false) {}
+            start(start), size(size), end(start+size), num_accesses(1), mmio(false) {}
     bool overlap(const Addr_Range& r, target_ulong pad = 0) {
         return start - pad <= r.end && r.start - pad <= end;
     }
@@ -57,10 +57,12 @@ struct Addr_Range {
         this->start = std::min(this->start, r.start);
         this->end = std::max(this->end, r.end);
         this->size = this->end - this->start;
+        if(this->start == r.start) this->phys_addr = r.phys_addr;
     }
     target_ulong start;
-    target_ulong size;
     target_ulong end;
+    target_ulong size;
+    target_phys_addr_t phys_addr;
     unsigned long num_accesses;
     bool mmio;
 };
@@ -71,9 +73,10 @@ std::vector<Addr_Range> accesses;
 
 void update_accesses(CPUState* env, target_ulong addr, target_ulong size) {
     Addr_Range r(addr, size);
+    r.phys_addr = cpu_get_phys_addr(env, addr);
     bool broke = false;
     for(auto i = accesses.begin(); i != accesses.end(); i++) {
-        if(i->overlap(r)) {
+        if(i->overlap(r, 0x40)) {
            i->merge(r);
            i->num_accesses++;
            broke = true;
@@ -81,6 +84,7 @@ void update_accesses(CPUState* env, target_ulong addr, target_ulong size) {
         }
     }
     if(!broke && (r.mmio = panda_is_io_memory(env, addr))) {
+
         accesses.push_back(r);
     }
 }
@@ -123,7 +127,7 @@ void uninit_plugin(void *self) {
     );
     printf("Mem ranges:\n");
     for(auto i = accesses.begin(); i != accesses.end(); i++) {
-        printf("start: 0x%lx, end: 0x%lx, size: %lu, IO: %d, #accesses: %lu\n",
-                i->start, i->end, i->size, i->mmio, i->num_accesses);
+        printf("vstart: 0x%lx, vend: 0x%lx, size: %lu, paddr: 0x%lx, IO: %d, #accesses: %lu\n",
+                i->start, i->end, i->size, i->phys_addr, i->mmio, i->num_accesses);
     }
 }

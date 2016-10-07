@@ -1046,6 +1046,9 @@ Note that there are two required fields always added to every pandalog entry:
 instruction count and program counter.  The rest of thes log messages come from
 the asidstory logging.  
 
+Also note that the appropriate code to print new log entry types should be
+added to `pandalog_print.c`.
+
 ### External References
 
 You may want to search google for "Protocol Buffers" to learn more about it.

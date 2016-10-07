@@ -1,0 +1,6 @@
+message AddrRange {
+    required uint64 size = 1;
+    required uint64 vstart = 2;
+    required uint64 pstart = 3;
+}
+optional AddrRange addr_range = 71;

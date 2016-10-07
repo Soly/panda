@@ -24,6 +24,7 @@ extern "C" {
 #include "disas.h"
 
 #include "panda_plugin.h"
+#include "pandalog.h"
 
 }
 
@@ -74,9 +75,22 @@ uint64_t num_reads, num_writes;
 std::vector<Addr_Range> accesses;
 
 void update_accesses(CPUState* env, target_ulong addr, target_ulong size) {
+    if(pandalog && panda_is_io_memory(env, addr)) {
+        Panda__AddrRange *range =
+            (Panda__AddrRange *) malloc(sizeof(Panda__AddrRange));
+        *range = PANDA__ADDR_RANGE__INIT;
+        range->size = size;
+        range->vstart = addr;
+        range->pstart = cpu_get_phys_addr(env, addr);
+
+        Panda__LogEntry ple = PANDA__LOG_ENTRY__INIT;
+        ple.addr_range = range;
+        pandalog_write_entry(&ple);
+        free(range);
+    }
+#if 0
     Addr_Range r(addr, size);
     r.phys_addr = cpu_get_phys_addr(env, addr);
-#if 0
     bool broke = false;
     for(auto i = accesses.begin(); i != accesses.end(); i++) {
         if(i->overlap(r, 0x40)) {
@@ -86,10 +100,10 @@ void update_accesses(CPUState* env, target_ulong addr, target_ulong size) {
            break;
         }
     }
-#endif
     if((r.mmio = panda_is_io_memory(env, addr))) {
         accesses.push_back(r);
     }
+#endif
 }
 
 int mem_write_callback(CPUState *env, target_ulong pc, target_ulong addr,

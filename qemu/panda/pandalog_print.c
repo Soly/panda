@@ -511,6 +511,13 @@ void pprint_ple(Panda__LogEntry *ple) {
         printf (" pri_trace ");
         pprint_src_info_pri(ple->pri_trace_src_info);
     }
+    if (ple->addr_range) {
+        printf(" size %lu", ple->addr_range->size);
+        printf(" vstart 0x%lx", ple->addr_range->vstart);
+        printf(" vend 0x%lx", ple->addr_range->vstart + ple->addr_range->size);
+        printf(" pstart 0x%lx", ple->addr_range->pstart);
+        printf(" pend 0x%lx", ple->addr_range->pstart + ple->addr_range->size);
+    }
 
     printf ("\n");
 }

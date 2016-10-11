@@ -22,11 +22,14 @@ extern "C" {
 #include "monitor.h"
 #include "cpu.h"
 #include "disas.h"
-
 #include "panda_plugin.h"
+#include "panda_plugin_plugin.h"
 #include "pandalog.h"
 
 }
+
+#include "../common/prog_point.h"
+#include "../callstack_instr/callstack_instr_ext.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -48,31 +51,8 @@ int mem_read_callback(CPUState *env, target_ulong pc, target_ulong addr, target_
 
 }
 
-struct Addr_Range {
-    Addr_Range(target_ulong start, target_ulong size) :
-            start(start), size(size), num_accesses(1), mmio(false) {
-        end = start+size;
-    }
-    bool overlap(const Addr_Range& r, target_ulong pad = 0) {
-        return start - pad <= r.end && r.start - pad <= end;
-    }
-    void merge(const Addr_Range& r) {
-        this->start = std::min(this->start, r.start);
-        this->end = std::max(this->end, r.end);
-        this->size = this->end - this->start;
-        if(this->start == r.start) this->phys_addr = r.phys_addr;
-    }
-    target_ulong start;
-    target_ulong end;
-    target_ulong size;
-    target_phys_addr_t phys_addr;
-    unsigned long num_accesses;
-    bool mmio;
-};
-
 uint64_t bytes_read, bytes_written;
 uint64_t num_reads, num_writes;
-std::vector<Addr_Range> accesses;
 
 void update_accesses(CPUState* env, target_ulong addr, target_ulong size) {
     if(pandalog && panda_is_io_memory(env, addr)) {
@@ -83,27 +63,15 @@ void update_accesses(CPUState* env, target_ulong addr, target_ulong size) {
         range->vstart = addr;
         range->pstart = cpu_get_phys_addr(env, addr);
 
+        Panda__CallStack *stack = pandalog_callstack_create();
+
         Panda__LogEntry ple = PANDA__LOG_ENTRY__INIT;
         ple.addr_range = range;
+        ple.call_stack = stack;
         pandalog_write_entry(&ple);
         free(range);
+        pandalog_callstack_free(stack);
     }
-#if 0
-    Addr_Range r(addr, size);
-    r.phys_addr = cpu_get_phys_addr(env, addr);
-    bool broke = false;
-    for(auto i = accesses.begin(); i != accesses.end(); i++) {
-        if(i->overlap(r, 0x40)) {
-           i->merge(r);
-           i->num_accesses++;
-           broke = true;
-           break;
-        }
-    }
-    if((r.mmio = panda_is_io_memory(env, addr))) {
-        accesses.push_back(r);
-    }
-#endif
 }
 
 int mem_write_callback(CPUState *env, target_ulong pc, target_ulong addr,
@@ -135,6 +103,9 @@ bool init_plugin(void *self) {
     pcb.virt_mem_write = mem_write_callback;
     panda_register_callback(self, PANDA_CB_VIRT_MEM_WRITE, pcb);
 
+    panda_require("callstack_instr");
+    if (!init_callstack_instr_api()) return false;
+
     return true;
 }
 
@@ -142,9 +113,4 @@ void uninit_plugin(void *self) {
     printf("Memory statistics: %lu loads, %lu stores, %lu bytes read, %lu bytes written.\n",
         num_reads, num_writes, bytes_read, bytes_written
     );
-    printf("Mem ranges:\n");
-    for(auto i = accesses.begin(); i != accesses.end(); i++) {
-        printf("vstart: 0x" TARGET_FMT_lx ", vend: 0x" TARGET_FMT_lx ", size: " TARGET_FMT_lu ", paddr: 0x" TARGET_FMT_plx ", IO: %d, #accesses: %lu\n",
-                i->start, i->end, i->size, i->phys_addr, i->mmio, i->num_accesses);
-    }
 }

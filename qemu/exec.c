@@ -85,7 +85,7 @@ void tcg_llvm_tb_free(struct TranslationBlock *tb);
 //#define DEBUG_TB_INVALIDATE
 //#define DEBUG_FLUSH
 //#define DEBUG_TLB
-//#define DEBUG_UNASSIGNED
+#define DEBUG_UNASSIGNED
 
 /* make various TB consistency checks */
 //#define DEBUG_TB_CHECK

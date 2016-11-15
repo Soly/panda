@@ -26,23 +26,26 @@
 
 
 struct MemAccess {
-    MemAccess(uint64_t size, uint64_t vstart, uint64_t pstart) :
-            size(size), vstart(vstart), vend(vstart+size),
+    MemAccess(uint64_t size, uint64_t instr, uint64_t pc, uint64_t vstart, uint64_t pstart) :
+            size(size), instr(instr), pc(pc), vstart(vstart), vend(vstart+size),
             pstart(pstart), pend(pstart+size), num_accesses(1), mmio(true) {}
 
     void pprint(void) {
-        printf("size: %lu ", size);
-        printf("vstart: 0x%lx ", vstart);
-        printf("vend: 0x%lx ", vend);
-        printf("pstart: 0x%lx ", pstart);
-        printf("pend: 0x%lx ", pend);
-        printf("num_accesses: %lu ", num_accesses);
-        printf("\n\tcall stack:  ");
-        for(size_t i = 0, n = 14; i < n; i++) {
+        printf("size: %lu,", size);
+        printf("instr: %lu,", instr);
+        printf("pc: 0x%lx,", pc);
+        printf("vstart: 0x%lx,", vstart);
+        printf("vend: 0x%lx,", vend);
+        printf("pstart: 0x%lx,", pstart);
+        printf("pend: 0x%lx,", pend);
+        printf("num_accesses: %lu,", num_accesses);
+        printf("call_stack: %lu(", callstack.size());
+        for(size_t i = 0; i < callstack.size(); i++) {
             printf("0x%lx", callstack[i]);
-            if(i+1 >= callstack.size() || i+1 == n || !callstack[i]) break;
+            if(i+1 >= callstack.size()) break;
             printf("->");
         }
+        printf(")");
         printf("\n");
     }
 
@@ -61,7 +64,7 @@ struct MemAccess {
     std::vector<uint64_t> callstack;
 };
 
-std::vector<MemAccess> process_entries(std::vector<Panda__LogEntry*>& entries,
+std::vector<MemAccess> process_entries(const std::vector<Panda__LogEntry*>& entries,
                                        bool (*overlap)(MemAccess&, MemAccess&, int),
                                        void (*merge)(MemAccess&, MemAccess&));
 
@@ -73,7 +76,8 @@ int main (int argc, char **argv) {
     pandalog_open((const char *) argv[1], (const char*) "r");
     Panda__LogEntry *ple;
     std::vector<Panda__LogEntry*> entries;
-    std::vector<MemAccess> phys_ranges;
+    std::vector<MemAccess> logs;
+
     while (1) {
         ple = pandalog_read_entry();
         if (ple == (Panda__LogEntry *)1) {
@@ -83,32 +87,38 @@ int main (int argc, char **argv) {
             break;
         }
         // pprint_ple(ple);
-        if (ple->addr_range) {
-            entries.push_back(ple);
+        if (ple->addr_range && ple->instr) {
+            auto rec = MemAccess(ple->addr_range->size, ple->instr, ple->pc,
+                    ple->addr_range->vstart, ple->addr_range->pstart);
+            if(ple->call_stack->n_addr)
+                rec.callstack = std::vector<uint64_t>(ple->call_stack->addr,
+                        ple->call_stack->addr + ple->call_stack->n_addr);
+            logs.push_back(rec);
         }
     }
 
-    phys_ranges = process_entries(entries, overlap_by_prange, merge_by_prange);
-    printf("before merge: %lu\n", entries.size());
-    printf("after merge:  %lu\n", phys_ranges.size());
-    printf("ranges:\n\n");
-    for(auto &i : phys_ranges) i.pprint();
+    // auto logs = process_entries(entries, overlap_by_prange, merge_by_prange);
+    // printf("before merge: %lu\n", entries.size());
+    // printf("after merge:  %lu\n", phys_ranges.size());
+    // printf("ranges:\n\n");
+    for(auto &i : logs) i.pprint();
     for(auto &i : entries)
         panda__log_entry__free_unpacked(i, NULL);
 }
 
-std::vector<MemAccess> process_entries(std::vector<Panda__LogEntry*>& entries,
+std::vector<MemAccess> process_entries(const std::vector<Panda__LogEntry*>& entries,
                                        bool (*overlap)(MemAccess&, MemAccess&, int),
                                        void (*merge)(MemAccess&, MemAccess&)) {
     bool broke;
     std::vector<MemAccess> r;
     for(auto &i : entries) {
-        auto ar = MemAccess(i->addr_range->size, i->addr_range->vstart,
-                i->addr_range->pstart);
+        auto ar = MemAccess(i->addr_range->size, i->instr, i->pc,
+                i->addr_range->vstart, i->addr_range->pstart);
         if(i->call_stack->n_addr)
             ar.callstack = std::vector<uint64_t>(i->call_stack->addr,
                     i->call_stack->addr + i->call_stack->n_addr);
         broke = false;
+        /*
         for(auto &j : r) {
            if(overlap(j, ar, 0)) {
                merge(j, ar);
@@ -118,6 +128,8 @@ std::vector<MemAccess> process_entries(std::vector<Panda__LogEntry*>& entries,
            }
         }
         if(!broke) r.push_back(ar);
+        */
+        r.push_back(ar);
     }
     return r;
 }

@@ -407,10 +407,13 @@ struct  _Panda__AddrRange
   uint64_t size;
   uint64_t vstart;
   uint64_t pstart;
+  char *type;
+  protobuf_c_boolean has_data;
+  ProtobufCBinaryData data;
 };
 #define PANDA__ADDR_RANGE__INIT \
  { PROTOBUF_C_MESSAGE_INIT (&panda__addr_range__descriptor) \
-    , 0, 0, 0 }
+    , 0, 0, 0, NULL, 0,{0,NULL} }
 
 
 struct  _Panda__LogEntry

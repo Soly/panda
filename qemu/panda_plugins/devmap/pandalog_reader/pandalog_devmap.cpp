@@ -26,9 +26,9 @@
 
 
 struct MemAccess {
-    MemAccess(uint64_t size, uint64_t instr, uint64_t pc, uint64_t vstart, uint64_t pstart) :
+    MemAccess(uint64_t size, uint64_t instr, uint64_t pc, uint64_t vstart, uint64_t pstart, char type) :
             size(size), instr(instr), pc(pc), vstart(vstart), vend(vstart+size),
-            pstart(pstart), pend(pstart+size), num_accesses(1), mmio(true) {}
+            pstart(pstart), pend(pstart+size), num_accesses(1), mmio(true), type(type) {}
 
     void pprint(void) {
         printf("size: %lu,", size);
@@ -38,12 +38,20 @@ struct MemAccess {
         printf("vend: 0x%lx,", vend);
         printf("pstart: 0x%lx,", pstart);
         printf("pend: 0x%lx,", pend);
+        printf("type: %s,", &type);
         printf("num_accesses: %lu,", num_accesses);
         printf("call_stack: %lu(", callstack.size());
         for(size_t i = 0; i < callstack.size(); i++) {
             printf("0x%lx", callstack[i]);
             if(i+1 >= callstack.size()) break;
             printf("->");
+        }
+        printf("),");
+        printf("data: %lu(", data.size());
+        for(size_t i = 0; i < data.size(); i++) {
+            printf("%02x", data[i]);
+            if(i+1 >= data.size()) break;
+            printf(".");
         }
         printf(")");
         printf("\n");
@@ -55,13 +63,15 @@ struct MemAccess {
     uint64_t vend;
     uint64_t pstart;
     uint64_t pend;
+    char type; // r or w
     uint64_t num_accesses;
     bool mmio; // should always be true
 
-    // other info from log
     uint64_t instr;
     uint64_t pc;
+
     std::vector<uint64_t> callstack;
+    std::vector<uint8_t> data;
 };
 
 std::vector<MemAccess> process_entries(const std::vector<Panda__LogEntry*>& entries,
@@ -89,10 +99,14 @@ int main (int argc, char **argv) {
         // pprint_ple(ple);
         if (ple->addr_range && ple->instr) {
             auto rec = MemAccess(ple->addr_range->size, ple->instr, ple->pc,
-                    ple->addr_range->vstart, ple->addr_range->pstart);
+                    ple->addr_range->vstart, ple->addr_range->pstart,
+                    *ple->addr_range->type);
             if(ple->call_stack->n_addr)
                 rec.callstack = std::vector<uint64_t>(ple->call_stack->addr,
                         ple->call_stack->addr + ple->call_stack->n_addr);
+            if(ple->addr_range->has_data)
+                rec.data = std::vector<uint8_t>(ple->addr_range->data.data,
+                        ple->addr_range->data.data + ple->addr_range->data.len);
             logs.push_back(rec);
         }
     }
@@ -113,7 +127,8 @@ std::vector<MemAccess> process_entries(const std::vector<Panda__LogEntry*>& entr
     std::vector<MemAccess> r;
     for(auto &i : entries) {
         auto ar = MemAccess(i->addr_range->size, i->instr, i->pc,
-                i->addr_range->vstart, i->addr_range->pstart);
+                i->addr_range->vstart, i->addr_range->pstart,
+                *i->addr_range->type);
         if(i->call_stack->n_addr)
             ar.callstack = std::vector<uint64_t>(i->call_stack->addr,
                     i->call_stack->addr + i->call_stack->n_addr);

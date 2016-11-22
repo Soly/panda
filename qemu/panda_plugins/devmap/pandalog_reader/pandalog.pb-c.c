@@ -3115,7 +3115,7 @@ const ProtobufCMessageDescriptor panda__taint_query_pri__descriptor =
   (ProtobufCMessageInit) panda__taint_query_pri__init,
   NULL,NULL,NULL    /* reserved[123] */
 };
-static const ProtobufCFieldDescriptor panda__addr_range__field_descriptors[3] =
+static const ProtobufCFieldDescriptor panda__addr_range__field_descriptors[5] =
 {
   {
     "size",
@@ -3153,16 +3153,42 @@ static const ProtobufCFieldDescriptor panda__addr_range__field_descriptors[3] =
     0,             /* flags */
     0,NULL,NULL    /* reserved1,reserved2, etc */
   },
+  {
+    "type",
+    4,
+    PROTOBUF_C_LABEL_REQUIRED,
+    PROTOBUF_C_TYPE_STRING,
+    0,   /* quantifier_offset */
+    offsetof(Panda__AddrRange, type),
+    NULL,
+    NULL,
+    0,             /* flags */
+    0,NULL,NULL    /* reserved1,reserved2, etc */
+  },
+  {
+    "data",
+    5,
+    PROTOBUF_C_LABEL_OPTIONAL,
+    PROTOBUF_C_TYPE_BYTES,
+    offsetof(Panda__AddrRange, has_data),
+    offsetof(Panda__AddrRange, data),
+    NULL,
+    NULL,
+    0,             /* flags */
+    0,NULL,NULL    /* reserved1,reserved2, etc */
+  },
 };
 static const unsigned panda__addr_range__field_indices_by_name[] = {
+  4,   /* field[4] = data */
   2,   /* field[2] = pstart */
   0,   /* field[0] = size */
+  3,   /* field[3] = type */
   1,   /* field[1] = vstart */
 };
 static const ProtobufCIntRange panda__addr_range__number_ranges[1 + 1] =
 {
   { 1, 0 },
-  { 0, 3 }
+  { 0, 5 }
 };
 const ProtobufCMessageDescriptor panda__addr_range__descriptor =
 {
@@ -3172,7 +3198,7 @@ const ProtobufCMessageDescriptor panda__addr_range__descriptor =
   "Panda__AddrRange",
   "panda",
   sizeof(Panda__AddrRange),
-  3,
+  5,
   panda__addr_range__field_descriptors,
   panda__addr_range__field_indices_by_name,
   1,  panda__addr_range__number_ranges,

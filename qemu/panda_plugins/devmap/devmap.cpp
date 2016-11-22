@@ -54,7 +54,8 @@ int mem_read_callback(CPUState *env, target_ulong pc, target_ulong addr, target_
 uint64_t bytes_read, bytes_written;
 uint64_t num_reads, num_writes;
 
-void update_accesses(CPUState* env, target_ulong addr, target_ulong size) {
+void update_accesses(CPUState* env, target_ulong addr, target_ulong size,
+                     char* type, void* data) {
     if(pandalog && panda_is_io_memory(env, addr)) {
         Panda__AddrRange *range =
             (Panda__AddrRange *) malloc(sizeof(Panda__AddrRange));
@@ -62,6 +63,13 @@ void update_accesses(CPUState* env, target_ulong addr, target_ulong size) {
         range->size = size;
         range->vstart = addr;
         range->pstart = cpu_get_phys_addr(env, addr);
+        range->type = type;
+        if(size < 64) {
+            range->has_data = true;
+            range->data.len = size;
+            range->data.data = (uint8_t*)data;
+        }
+        else range->has_data = false;
 
         Panda__CallStack *stack = pandalog_callstack_create();
 
@@ -78,7 +86,7 @@ int mem_write_callback(CPUState *env, target_ulong pc, target_ulong addr,
                        target_ulong size, void *buf) {
     bytes_written += size;
     num_writes++;
-    update_accesses(env, addr, size);
+    update_accesses(env, addr, size, "w", buf);
     return 1;
 }
 
@@ -86,7 +94,7 @@ int mem_read_callback(CPUState *env, target_ulong pc, target_ulong addr,
                        target_ulong size, void *buf) {
     bytes_read += size;
     num_reads++;
-    update_accesses(env, addr, size);
+    update_accesses(env, addr, size, "r", buf);
     return 1;
 }
 

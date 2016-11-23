@@ -23,5 +23,10 @@ Panda__CallStack *pandalog_callstack_create(void);
 // free that data structure
 void pandalog_callstack_free(Panda__CallStack *cs);
 
+// create pandalog message for functionstack info 
+Panda__FunctionStack *pandalog_functionstack_create(void);
+
+// free that data structure
+void pandalog_functionstack_free(Panda__FunctionStack *fs);
 
 #endif

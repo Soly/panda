@@ -3,9 +3,9 @@ message CallStack {
     repeated uint64 addr = 1;
 }
 
+message FunctionStack {
+    repeated uint64 addr = 1;
+}
+
 optional CallStack call_stack = 10;
-
-
-
-
-        
+optional FunctionStack function_stack = 73;

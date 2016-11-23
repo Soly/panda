@@ -363,7 +363,6 @@ Panda__CallStack *pandalog_callstack_create() {
     *cs = PANDA__CALL_STACK__INIT;
     cs->n_addr = n;
     cs->addr = (uint64_t *) malloc (sizeof(uint64_t) * n);
-    v = callstacks[get_stackid(env,env->panda_guest_pc)];
     auto rit = v.rbegin();
     for (size_t i = 0; i < n && rit != v.rend(); i++, rit++) {
         cs->addr[i] = rit->pc;
@@ -390,6 +389,32 @@ int get_functions(target_ulong functions[], int n, CPUState *env) {
     }
     return i;
 }
+
+
+Panda__FunctionStack *pandalog_functionstack_create() {
+    assert (pandalog);
+    extern CPUState *cpu_single_env;
+    CPUState *env = cpu_single_env;
+    uint32_t n = 0;
+    std::vector<target_ulong> &v = function_stacks[get_stackid(env,env->panda_guest_pc)];
+    n = std::min(v.size(), (size_t)16);
+    Panda__FunctionStack *fs = (Panda__FunctionStack *) malloc (sizeof(Panda__FunctionStack));
+    *fs = PANDA__FUNCTION_STACK__INIT;
+    fs->n_addr = n;
+    fs->addr = (uint64_t *) malloc (sizeof(uint64_t) * n);
+    auto rit = v.rbegin();
+    for (size_t i = 0; i < n && rit != v.rend(); i++, rit++) {
+        fs->addr[i] = *rit;
+    }
+    return fs;
+}
+
+
+void pandalog_functionstack_free(Panda__FunctionStack *fs) {
+    free(fs->addr);
+    free(fs);
+}
+
 
 void get_prog_point(CPUState *env, prog_point *p) {
     if (!p) return;

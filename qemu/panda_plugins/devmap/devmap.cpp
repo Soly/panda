@@ -71,14 +71,17 @@ void update_accesses(CPUState* env, target_ulong addr, target_ulong size,
         }
         else range->has_data = false;
 
-        Panda__CallStack *stack = pandalog_callstack_create();
+        Panda__CallStack *cs = pandalog_callstack_create();
+        Panda__FunctionStack *fs = pandalog_functionstack_create();
 
         Panda__LogEntry ple = PANDA__LOG_ENTRY__INIT;
         ple.addr_range = range;
-        ple.call_stack = stack;
+        ple.call_stack = cs;
+        ple.function_stack = fs;
         pandalog_write_entry(&ple);
         free(range);
-        pandalog_callstack_free(stack);
+        pandalog_callstack_free(cs);
+        pandalog_functionstack_free(fs);
     }
 }
 

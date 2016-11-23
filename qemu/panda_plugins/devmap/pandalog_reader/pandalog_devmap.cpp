@@ -47,6 +47,13 @@ struct MemAccess {
             printf("->");
         }
         printf("),");
+        printf("function_stack: %lu(", functionstack.size());
+        for(size_t i = 0; i < functionstack.size(); i++) {
+            printf("0x%lx", functionstack[i]);
+            if(i+1 >= functionstack.size()) break;
+            printf("->");
+        }
+        printf("),");
         printf("data: %lu(", data.size());
         for(size_t i = 0; i < data.size(); i++) {
             printf("%02x", data[i]);
@@ -71,6 +78,7 @@ struct MemAccess {
     uint64_t pc;
 
     std::vector<uint64_t> callstack;
+    std::vector<uint64_t> functionstack;
     std::vector<uint8_t> data;
 };
 
@@ -104,6 +112,9 @@ int main (int argc, char **argv) {
             if(ple->call_stack->n_addr)
                 rec.callstack = std::vector<uint64_t>(ple->call_stack->addr,
                         ple->call_stack->addr + ple->call_stack->n_addr);
+            if(ple->function_stack->n_addr)
+                rec.functionstack = std::vector<uint64_t>(ple->function_stack->addr,
+                        ple->function_stack->addr + ple->function_stack->n_addr);
             if(ple->addr_range->has_data)
                 rec.data = std::vector<uint8_t>(ple->addr_range->data.data,
                         ple->addr_range->data.data + ple->addr_range->data.len);

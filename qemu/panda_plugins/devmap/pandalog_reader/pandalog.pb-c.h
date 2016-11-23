@@ -21,6 +21,7 @@ typedef struct _Panda__TaintQuery Panda__TaintQuery;
 typedef struct _Panda__AttackPoint Panda__AttackPoint;
 typedef struct _Panda__TaintQueryHypercall Panda__TaintQueryHypercall;
 typedef struct _Panda__CallStack Panda__CallStack;
+typedef struct _Panda__FunctionStack Panda__FunctionStack;
 typedef struct _Panda__Bir Panda__Bir;
 typedef struct _Panda__TaintedBranch Panda__TaintedBranch;
 typedef struct _Panda__TaintedBranchSummary Panda__TaintedBranchSummary;
@@ -129,6 +130,17 @@ struct  _Panda__CallStack
 };
 #define PANDA__CALL_STACK__INIT \
  { PROTOBUF_C_MESSAGE_INIT (&panda__call_stack__descriptor) \
+    , 0,NULL }
+
+
+struct  _Panda__FunctionStack
+{
+  ProtobufCMessage base;
+  size_t n_addr;
+  uint64_t *addr;
+};
+#define PANDA__FUNCTION_STACK__INIT \
+ { PROTOBUF_C_MESSAGE_INIT (&panda__function_stack__descriptor) \
     , 0,NULL }
 
 
@@ -426,6 +438,7 @@ struct  _Panda__LogEntry
   Panda__TaintQueryHypercall *taint_query_hypercall;
   Panda__AttackPoint *attack_point;
   Panda__CallStack *call_stack;
+  Panda__FunctionStack *function_stack;
   Panda__Bir *bir;
   Panda__TaintedBranch *tainted_branch;
   Panda__TaintedBranchSummary *tainted_branch_summary;
@@ -493,7 +506,7 @@ struct  _Panda__LogEntry
 };
 #define PANDA__LOG_ENTRY__INIT \
  { PROTOBUF_C_MESSAGE_INIT (&panda__log_entry__descriptor) \
-    , 0, 0, 0,NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0,0, NULL, 0,0, 0,0, 0,0, 0,0, 0,0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0,0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL }
+    , 0, 0, 0,NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0,0, NULL, 0,0, 0,0, 0,0, 0,0, 0,0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0,0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL }
 
 
 /* Panda__TaintQueryUniqueLabelSet methods */
@@ -609,6 +622,25 @@ Panda__CallStack *
                       const uint8_t       *data);
 void   panda__call_stack__free_unpacked
                      (Panda__CallStack *message,
+                      ProtobufCAllocator *allocator);
+/* Panda__FunctionStack methods */
+void   panda__function_stack__init
+                     (Panda__FunctionStack         *message);
+size_t panda__function_stack__get_packed_size
+                     (const Panda__FunctionStack   *message);
+size_t panda__function_stack__pack
+                     (const Panda__FunctionStack   *message,
+                      uint8_t             *out);
+size_t panda__function_stack__pack_to_buffer
+                     (const Panda__FunctionStack   *message,
+                      ProtobufCBuffer     *buffer);
+Panda__FunctionStack *
+       panda__function_stack__unpack
+                     (ProtobufCAllocator  *allocator,
+                      size_t               len,
+                      const uint8_t       *data);
+void   panda__function_stack__free_unpacked
+                     (Panda__FunctionStack *message,
                       ProtobufCAllocator *allocator);
 /* Panda__Bir methods */
 void   panda__bir__init
@@ -1086,6 +1118,9 @@ typedef void (*Panda__TaintQueryHypercall_Closure)
 typedef void (*Panda__CallStack_Closure)
                  (const Panda__CallStack *message,
                   void *closure_data);
+typedef void (*Panda__FunctionStack_Closure)
+                 (const Panda__FunctionStack *message,
+                  void *closure_data);
 typedef void (*Panda__Bir_Closure)
                  (const Panda__Bir *message,
                   void *closure_data);
@@ -1170,6 +1205,7 @@ extern const ProtobufCMessageDescriptor panda__taint_query__descriptor;
 extern const ProtobufCMessageDescriptor panda__attack_point__descriptor;
 extern const ProtobufCMessageDescriptor panda__taint_query_hypercall__descriptor;
 extern const ProtobufCMessageDescriptor panda__call_stack__descriptor;
+extern const ProtobufCMessageDescriptor panda__function_stack__descriptor;
 extern const ProtobufCMessageDescriptor panda__bir__descriptor;
 extern const ProtobufCMessageDescriptor panda__tainted_branch__descriptor;
 extern const ProtobufCMessageDescriptor panda__tainted_branch_summary__descriptor;

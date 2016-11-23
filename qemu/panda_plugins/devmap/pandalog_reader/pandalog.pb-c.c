@@ -265,6 +265,49 @@ void   panda__call_stack__free_unpacked
   assert(message->base.descriptor == &panda__call_stack__descriptor);
   protobuf_c_message_free_unpacked ((ProtobufCMessage*)message, allocator);
 }
+void   panda__function_stack__init
+                     (Panda__FunctionStack         *message)
+{
+  static Panda__FunctionStack init_value = PANDA__FUNCTION_STACK__INIT;
+  *message = init_value;
+}
+size_t panda__function_stack__get_packed_size
+                     (const Panda__FunctionStack *message)
+{
+  assert(message->base.descriptor == &panda__function_stack__descriptor);
+  return protobuf_c_message_get_packed_size ((const ProtobufCMessage*)(message));
+}
+size_t panda__function_stack__pack
+                     (const Panda__FunctionStack *message,
+                      uint8_t       *out)
+{
+  assert(message->base.descriptor == &panda__function_stack__descriptor);
+  return protobuf_c_message_pack ((const ProtobufCMessage*)message, out);
+}
+size_t panda__function_stack__pack_to_buffer
+                     (const Panda__FunctionStack *message,
+                      ProtobufCBuffer *buffer)
+{
+  assert(message->base.descriptor == &panda__function_stack__descriptor);
+  return protobuf_c_message_pack_to_buffer ((const ProtobufCMessage*)message, buffer);
+}
+Panda__FunctionStack *
+       panda__function_stack__unpack
+                     (ProtobufCAllocator  *allocator,
+                      size_t               len,
+                      const uint8_t       *data)
+{
+  return (Panda__FunctionStack *)
+     protobuf_c_message_unpack (&panda__function_stack__descriptor,
+                                allocator, len, data);
+}
+void   panda__function_stack__free_unpacked
+                     (Panda__FunctionStack *message,
+                      ProtobufCAllocator *allocator)
+{
+  assert(message->base.descriptor == &panda__function_stack__descriptor);
+  protobuf_c_message_free_unpacked ((ProtobufCMessage*)message, allocator);
+}
 void   panda__bir__init
                      (Panda__Bir         *message)
 {
@@ -1718,6 +1761,44 @@ const ProtobufCMessageDescriptor panda__call_stack__descriptor =
   panda__call_stack__field_indices_by_name,
   1,  panda__call_stack__number_ranges,
   (ProtobufCMessageInit) panda__call_stack__init,
+  NULL,NULL,NULL    /* reserved[123] */
+};
+static const ProtobufCFieldDescriptor panda__function_stack__field_descriptors[1] =
+{
+  {
+    "addr",
+    1,
+    PROTOBUF_C_LABEL_REPEATED,
+    PROTOBUF_C_TYPE_UINT64,
+    offsetof(Panda__FunctionStack, n_addr),
+    offsetof(Panda__FunctionStack, addr),
+    NULL,
+    NULL,
+    0,             /* flags */
+    0,NULL,NULL    /* reserved1,reserved2, etc */
+  },
+};
+static const unsigned panda__function_stack__field_indices_by_name[] = {
+  0,   /* field[0] = addr */
+};
+static const ProtobufCIntRange panda__function_stack__number_ranges[1 + 1] =
+{
+  { 1, 0 },
+  { 0, 1 }
+};
+const ProtobufCMessageDescriptor panda__function_stack__descriptor =
+{
+  PROTOBUF_C__MESSAGE_DESCRIPTOR_MAGIC,
+  "panda.FunctionStack",
+  "FunctionStack",
+  "Panda__FunctionStack",
+  "panda",
+  sizeof(Panda__FunctionStack),
+  1,
+  panda__function_stack__field_descriptors,
+  panda__function_stack__field_indices_by_name,
+  1,  panda__function_stack__number_ranges,
+  (ProtobufCMessageInit) panda__function_stack__init,
   NULL,NULL,NULL    /* reserved[123] */
 };
 static const ProtobufCFieldDescriptor panda__bir__field_descriptors[5] =
@@ -3205,7 +3286,7 @@ const ProtobufCMessageDescriptor panda__addr_range__descriptor =
   (ProtobufCMessageInit) panda__addr_range__init,
   NULL,NULL,NULL    /* reserved[123] */
 };
-static const ProtobufCFieldDescriptor panda__log_entry__field_descriptors[63] =
+static const ProtobufCFieldDescriptor panda__log_entry__field_descriptors[64] =
 {
   {
     "pc",
@@ -3963,6 +4044,18 @@ static const ProtobufCFieldDescriptor panda__log_entry__field_descriptors[63] =
     0,             /* flags */
     0,NULL,NULL    /* reserved1,reserved2, etc */
   },
+  {
+    "function_stack",
+    73,
+    PROTOBUF_C_LABEL_OPTIONAL,
+    PROTOBUF_C_TYPE_MESSAGE,
+    0,   /* quantifier_offset */
+    offsetof(Panda__LogEntry, function_stack),
+    &panda__function_stack__descriptor,
+    NULL,
+    0,             /* flags */
+    0,NULL,NULL    /* reserved1,reserved2, etc */
+  },
 };
 static const unsigned panda__log_entry__field_indices_by_name[] = {
   61,   /* field[61] = addr_range */
@@ -3974,6 +4067,7 @@ static const unsigned panda__log_entry__field_indices_by_name[] = {
   29,   /* field[29] = dead_data */
   56,   /* field[56] = dwarf_call */
   57,   /* field[57] = dwarf_ret */
+  63,   /* field[63] = function_stack */
   1,   /* field[1] = instr */
   9,   /* field[9] = new_pid */
   40,   /* field[40] = nt_accept_connect_port */
@@ -4037,7 +4131,7 @@ static const ProtobufCIntRange panda__log_entry__number_ranges[6 + 1] =
   { 36, 30 },
   { 60, 52 },
   { 65, 55 },
-  { 0, 63 }
+  { 0, 64 }
 };
 const ProtobufCMessageDescriptor panda__log_entry__descriptor =
 {
@@ -4047,7 +4141,7 @@ const ProtobufCMessageDescriptor panda__log_entry__descriptor =
   "Panda__LogEntry",
   "panda",
   sizeof(Panda__LogEntry),
-  63,
+  64,
   panda__log_entry__field_descriptors,
   panda__log_entry__field_indices_by_name,
   6,  panda__log_entry__number_ranges,

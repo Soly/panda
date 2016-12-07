@@ -30,6 +30,8 @@ extern "C" {
 
 #include "../common/prog_point.h"
 #include "../callstack_instr/callstack_instr_ext.h"
+#include "../osi/osi_types.h"
+#include "../osi/osi_ext.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -50,6 +52,8 @@ int mem_write_callback(CPUState *env, target_ulong pc, target_ulong addr, target
 int mem_read_callback(CPUState *env, target_ulong pc, target_ulong addr, target_ulong size, void *buf);
 
 }
+
+void print_modules(CPUState *env);
 
 uint64_t bytes_read, bytes_written;
 uint64_t num_reads, num_writes;
@@ -83,6 +87,7 @@ void update_accesses(CPUState* env, target_ulong addr, target_ulong size,
         pandalog_callstack_free(cs);
         pandalog_functionstack_free(fs);
     }
+    print_modules(env);
 }
 
 int mem_write_callback(CPUState *env, target_ulong pc, target_ulong addr,
@@ -101,6 +106,20 @@ int mem_read_callback(CPUState *env, target_ulong pc, target_ulong addr,
     return 1;
 }
 
+void print_modules(CPUState *env) {
+    OsiModules *kms = get_modules(env);
+    if (kms == NULL) {
+        // printf("No mapped kernel modules.\n");
+    }
+    else {
+        printf("Kernel module list (%d modules):\n", kms->num);
+        for (size_t i = 0; i < kms->num; i++)
+            printf("\t0x" TARGET_FMT_lx "\t" TARGET_FMT_ld "\t%-24s %s\n", 
+                    kms->module[i].base, kms->module[i].size, 
+                    kms->module[i].name, kms->module[i].file);
+    }
+}
+
 bool init_plugin(void *self) {
     panda_cb pcb;
 
@@ -116,7 +135,7 @@ bool init_plugin(void *self) {
 
     panda_require("callstack_instr");
     if (!init_callstack_instr_api()) return false;
-
+    if(!init_osi_api()) return false;
     return true;
 }
 
